@@ -14,15 +14,18 @@ String tripToJson(List<Trip> data) =>
 
 class Trip {
   int? tripId;
+  int? tripStatus;
   TripClass? trip;
 
   Trip({
     this.tripId,
     this.trip,
+    this.tripStatus,
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) => Trip(
         tripId: json["trip_id"],
+        tripStatus: json["trip_status"],
         trip: json["trip"] == null ? null : TripClass.fromJson(json["trip"]),
       );
 

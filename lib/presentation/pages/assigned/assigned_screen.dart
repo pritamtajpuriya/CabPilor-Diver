@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:readmock/config/app_text_styles.dart';
 import 'package:readmock/domain/model/trip.dart';
 import 'package:readmock/presentation/pages/assigned/cubit/assigned_cubit.dart';
+import 'package:readmock/presentation/pages/assigned/trip_start_screen.dart';
 import 'package:readmock/presentation/widgets/custom_scaffold.dart';
+import 'package:readmock/presentation/widgets/horizontal_line.dart';
 
 import '../../../constant/enum.dart';
 import '../../widgets/not_found.dart';
@@ -55,46 +58,86 @@ class _AssignedScreenState extends State<AssignedScreen> {
                   itemCount: state.assignedList.length,
                   itemBuilder: (context, index) {
                     Trip trip = state.assignedList[index];
-                    return Card(
-                      elevation: 4.0,
-                      margin:
-                          EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Color.fromRGBO(64, 75, 96, .9)),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 20.0, vertical: 10.0),
-                          leading: Container(
-                            padding: EdgeInsets.only(right: 12.0),
-                            decoration: BoxDecoration(
-                                border: Border(
-                                    right: BorderSide(
-                                        width: 1.0, color: Colors.white24))),
-                            child: Icon(Icons.autorenew, color: Colors.white),
-                          ),
-                          title: Text(
-                            trip.trip!.user!.name!,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          // subtitle: Text("Intermediate", style: TextStyle(color: Colors.white)),
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => TripStartScreen(
+                                      trip: trip,
+                                    )));
+                      },
+                      child: Card(
+                        elevation: 4.0,
+                        margin: EdgeInsets.symmetric(
+                            horizontal: 10.0, vertical: 6.0),
+                        child: Container(
+                            decoration: BoxDecoration(),
+                            child: ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 10.0),
+                                title: Row(
+                                  children: [
+                                    CircleAvatar(
+                                        backgroundColor: Colors.blueGrey,
+                                        child: Icon(Icons.person_pin_outlined)),
+                                    SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          trip.trip!.user!.name!,
+                                          style:
+                                              AppTextStyle.h4TitleTextStyle(),
+                                        ),
+                                        Text(
+                                          "Rs. " +
+                                              trip.trip!.totalPrice.toString(),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14),
+                                        )
+                                      ],
+                                    ),
+                                    Spacer(),
+                                    Text(
+                                      trip.tripStatus == null
+                                          ? 'Pending'
+                                          : trip.tripStatus == 1
+                                              ? 'Started'
+                                              : 'Not Started',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall!
+                                          .copyWith(
+                                              color: trip.tripStatus == 1
+                                                  ? Colors.green
+                                                  : Colors.grey),
+                                    )
+                                  ],
+                                ),
+                                // subtitle: Text("Intermediate", style: TextStyle(color: Colors.white)),
 
-                          subtitle: Row(
-                            children: <Widget>[
-                              Icon(Icons.linear_scale,
-                                  color: Colors.yellowAccent),
-                              Text(trip.trip!.id.toString(),
-                                  style: TextStyle(color: Colors.white))
-                            ],
-                          ),
-                          trailing: Icon(Icons.keyboard_arrow_right,
-                              color: Colors.white, size: 30.0),
-                          onTap: () {
-                            // Logic to open Trip details
-                          },
-                        ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Divider(),
+                                    Text(trip.trip!.from!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall!
+                                            .copyWith()),
+                                    Icon(Icons.more_vert_sharp,
+                                        color: Colors.green),
+                                    Text(trip.trip!.to.toString(),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall!
+                                            .copyWith())
+                                  ],
+                                ),
+                                isThreeLine: true)),
                       ),
                     );
                   });
