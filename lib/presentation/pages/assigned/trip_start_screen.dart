@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import 'package:readmock/domain/model/trip.dart';
 import 'package:readmock/presentation/pages/home/cubit/home_cubit.dart';
 import 'package:readmock/presentation/widgets/custom_scaffold.dart';
 import 'package:http/http.dart' as http;
+import 'dart:math' as math;
 
 class TripStartScreen extends StatefulWidget {
   TripStartScreen({Key? key, required this.trip}) : super(key: key);
@@ -74,11 +76,12 @@ class _TripStartScreenState extends State<TripStartScreen> {
       ),
     );
 
-    // Fetch directions and draw polyline
+    fetchDirections(from, to); // Call fetchDirections here
   }
 
   Future<void> fetchDirections(LatLng origin, LatLng destination) async {
-    final apiKey = 'AIzaSyBDAit_21ZT1Wdu95dfDAYEnIqz8lwMa2o';
+    final apiKey =
+        'AIzaSyBDAit_21ZT1Wdu95dfDAYEnIqz8lwMa2o'; // Replace with your API key
     final url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&mode=driving&key=$apiKey';
 
@@ -104,13 +107,7 @@ class _TripStartScreenState extends State<TripStartScreen> {
         });
 
         // Zoom the camera to fit both markers and the polyline
-        // fitBounds(LatLngBounds(southwest: origin, northeast: destination));
-        mapController.animateCamera(CameraUpdate.newLatLngBounds(
-            LatLngBounds(
-              southwest: destination,
-              northeast: origin,
-            ),
-            50));
+        fitBounds(LatLngBounds(southwest: destination, northeast: origin));
       }
     }
   }
@@ -153,15 +150,40 @@ class _TripStartScreenState extends State<TripStartScreen> {
       return;
     }
 
-    CameraUpdate u2 = CameraUpdate.newLatLngBounds(
-      bounds,
-      50.0,
+    LatLngBounds newBounds = LatLngBounds(
+      southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
+      northeast: LatLng(bounds.northeast.latitude, bounds.northeast.longitude),
     );
-    //zoom
 
+    // Calculate distance between bounds
+    double distance = _calculateDistance(newBounds);
+
+    // Set the zoom level based on the distance
+    double zoomLevel = _calculateZoomLevel(distance);
+
+    log('Zoom Level ' + zoomLevel.toString());
+
+    // Animate camera to fit bounds with accurate zoom level
     mapController.animateCamera(
-      u2,
+      CameraUpdate.newLatLngBounds(newBounds, 50),
     );
+    // mapController.animateCamera(
+    //   CameraUpdate.newLatLngBounds(newBounds, 15),
+    // );
+  }
+
+  double _calculateDistance(LatLngBounds bounds) {
+    double distance = math.sqrt(math.pow(
+            bounds.northeast.latitude - bounds.southwest.latitude, 2) +
+        math.pow(bounds.northeast.longitude - bounds.southwest.longitude, 2));
+    return distance;
+  }
+
+  double _calculateZoomLevel(double distance) {
+    const double maxZoomLevel = 21.0;
+
+    double zoomLevel = math.log((2 * math.pi * distance) / 156543.03392);
+    return zoomLevel.clamp(0.0, maxZoomLevel);
   }
 
   @override
@@ -172,35 +194,8 @@ class _TripStartScreenState extends State<TripStartScreen> {
         title: Text('Trip Details'),
       ),
       body: GoogleMap(
-        onMapCreated: (controller) async {
+        onMapCreated: (controller) {
           mapController = controller;
-
-          await fetchDirections(
-              LatLng(
-                double.parse(widget.trip.trip!.pickLat!),
-                double.parse(widget.trip.trip!.pickLng!),
-              ),
-              LatLng(
-                double.parse(widget.trip.trip!.dropLat!),
-                double.parse(widget.trip.trip!.dropLng!),
-              ));
-
-          controller
-              .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-                  target: LatLng(
-            double.parse(widget.trip.trip!.pickLat!),
-            double.parse(widget.trip.trip!.pickLng!),
-          ))));
-
-          // fitBounds(LatLngBounds(
-          //     southwest: LatLng(
-          //       double.parse(widget.trip.trip!.pickLat!),
-          //       double.parse(widget.trip.trip!.pickLng!),
-          //     ),
-          //     northeast: LatLng(
-          //       double.parse(widget.trip.trip!.dropLat!),
-          //       double.parse(widget.trip.trip!.dropLng!),
-          //     )));
         },
         initialCameraPosition: CameraPosition(
           target:
