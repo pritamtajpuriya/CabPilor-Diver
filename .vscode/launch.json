@@ -1,0 +1,10 @@
+{
+  "configurations": [
+    {
+      "name": "Flutter (lib\\presentation\\widgets\\custom_dropdown.dart)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib\\presentation\\widgets\\custom_dropdown.dart"
+    }
+  ]
+}

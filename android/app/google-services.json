@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "682114035014",
+    "project_id": "cabpil",
+    "storage_bucket": "cabpil.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:682114035014:android:ed3f812dde233552c6c947",
+        "android_client_info": {
+          "package_name": "com.cabpilot.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDukTOVFo-KgrqMYBnfIKVT_jpg5bBa1xc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
