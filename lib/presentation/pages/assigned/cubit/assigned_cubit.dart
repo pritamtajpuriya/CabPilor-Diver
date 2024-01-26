@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:readmock/constant/enum.dart';
+import 'package:readmock/data/request/start_trip_request.dart';
 import 'package:readmock/domain/model/trip.dart';
 import 'package:readmock/domain/repository/data_repository.dart';
 
@@ -21,7 +24,49 @@ class AssignedCubit extends Cubit<AssignedState> {
           getAssignedStatus: StateStatusEnum.error));
     }, (r) {
       emit(state.copyWith(
-          assignedList: r, getAssignedStatus: StateStatusEnum.success));
+          assignedList: r.reversed.toList(),
+          getAssignedStatus: StateStatusEnum.success));
+    });
+  }
+
+  startTrip(StartTripRequest request) async {
+    emit(state.copyWith(startTripStatus: StateStatusEnum.loading));
+    var response = await _dataRepository.startTrip(request);
+    response.fold((l) {
+      emit(state.copyWith(
+          startTripStatus: StateStatusEnum.error, startTripError: l.message));
+      emit(state.copyWith(startTripStatus: StateStatusEnum.initial));
+    }, (r) {
+      var trip = state.trip!.copyWith(
+        tripStatus: 0,
+      );
+      emit(
+          state.copyWith(startTripStatus: StateStatusEnum.initial, trip: trip));
+
+      getTripsList();
+    });
+  }
+
+  setTrip(Trip trip) {
+    emit(state.copyWith(trip: trip, startTripStatus: StateStatusEnum.initial));
+  }
+
+  endTrip(int tripId) async {
+    emit(state.copyWith(startTripStatus: StateStatusEnum.loading));
+    var response = await _dataRepository.endTrip(tripId);
+    response.fold((l) {
+      emit(state.copyWith(
+          startTripStatus: StateStatusEnum.error, startTripError: l.message));
+    }, (r) {
+      var trip = state.trip!.copyWith(
+        tripStatus: 1,
+      );
+
+      emit(
+          state.copyWith(startTripStatus: StateStatusEnum.success, trip: trip));
+      emit(state.copyWith(startTripStatus: StateStatusEnum.initial));
+
+      getTripsList();
     });
   }
 }

@@ -8,6 +8,7 @@ import '../../constant/config.dart';
 import '../../data/request/accept_booking_reqeuest.dart';
 import '../../data/request/online_toggle_request.dart';
 import '../../data/request/payment_request.dart';
+import '../../data/request/start_trip_request.dart';
 import '../model/blog.dart';
 import '../model/payment_model.dart';
 import '../model/trip.dart';
@@ -46,4 +47,9 @@ abstract class DataRepository {
   EitherData<String> acceptBooking(AcceptBookingRequest request);
 
   EitherData<List<Trip>> getTrips();
+
+  EitherData<String> startTrip(StartTripRequest request);
+
+  //End Trip
+  EitherData<String> endTrip(int tripId);
 }

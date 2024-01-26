@@ -23,6 +23,14 @@ class Trip {
     this.tripStatus,
   });
 
+  Trip copyWith({
+    int? tripStatus,
+  }) {
+    return Trip(
+      tripStatus: tripStatus ?? this.tripStatus,
+    );
+  }
+
   factory Trip.fromJson(Map<String, dynamic> json) => Trip(
         tripId: json["trip_id"],
         tripStatus: json["trip_status"],

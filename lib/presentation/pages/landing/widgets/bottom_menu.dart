@@ -32,7 +32,7 @@ class BottomMenu extends StatelessWidget {
     List<BottomNavigationBarItem> items = [
       getItem(Icons.two_wheeler, 'Ride', 0, theme),
       getItem(Icons.rss_feed_rounded, 'Assigned', 1, theme),
-      getItem(Icons.inbox_sharp, 'Orders', 2, theme),
+      getItem(Icons.notifications, 'Notifications', 2, theme),
       getItem(Icons.menu, 'More', 3, theme),
     ];
     return Container(

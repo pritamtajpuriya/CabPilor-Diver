@@ -65,7 +65,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 case 1:
                   return AssignedScreen();
                 case 2:
-                  return OrderScreen();
+                  return NotificationScreen();
 
                 case 3:
                   return ProfileScreen();

@@ -75,6 +75,8 @@ dependencies:
   one_context: ^2.1.0
   animated_text_kit: ^4.2.2
   google_maps_webservice: ^0.0.19
+  camera: ^0.10.5+5
+  slide_to_act: ^2.0.2
 
 dev_dependencies:
   flutter_test:

@@ -75,11 +75,11 @@ class _CustomImagePickerState extends State<CustomImagePicker> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_imageFile != null ? 'Image Selected' : widget.title,
+                Text(_imageFile != null ? widget.title : widget.title,
                     style: AppTextStyle.h3TitleTextStyle()
                         .copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
@@ -166,8 +166,9 @@ class _CustomImagePickerState extends State<CustomImagePicker> {
                       )
                     : Container(
                         width: double.infinity,
-                        height: 80, // Set the height of the image preview
+                        height: 50, // Set the height of the image preview
                         decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: Colors.grey,
                             width: 1.0,
@@ -175,11 +176,10 @@ class _CustomImagePickerState extends State<CustomImagePicker> {
                         ),
                         child: const Icon(
                           Icons.camera_alt,
-                          size: 40,
+                          size: 24,
                           color: Colors.grey,
                         ),
                       ),
-                const SizedBox(height: 16),
               ],
             ),
           ),

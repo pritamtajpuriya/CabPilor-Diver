@@ -64,6 +64,7 @@ class AppInterceptors extends Interceptor {
   void onError(DioError err, ErrorInterceptorHandler handler) {
     // throw ServerException(message: err.message);
     log(err.toString());
+    log(err.response.toString());
     switch (err.type) {
       case DioErrorType.connectTimeout:
       case DioErrorType.sendTimeout:

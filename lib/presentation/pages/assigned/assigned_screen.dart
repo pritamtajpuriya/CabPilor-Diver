@@ -103,15 +103,16 @@ class _AssignedScreenState extends State<AssignedScreen> {
                                     Spacer(),
                                     Text(
                                       trip.tripStatus == null
-                                          ? 'Pending'
+                                          ? 'Not Started'
                                           : trip.tripStatus == 1
-                                              ? 'Started'
-                                              : 'Not Started',
+                                              ? 'Completed'
+                                              : 'Started',
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelSmall!
                                           .copyWith(
-                                              color: trip.tripStatus == 1
+                                              color: trip.tripStatus == 0 ||
+                                                      trip.tripStatus == 1
                                                   ? Colors.green
                                                   : Colors.grey),
                                     )

@@ -10,6 +10,7 @@ import 'package:readmock/data/request/create_booklet_request.dart';
 import 'package:readmock/data/request/create_customer_request.dart';
 import 'package:readmock/data/request/online_toggle_request.dart';
 import 'package:readmock/data/request/payment_request.dart';
+import 'package:readmock/data/request/start_trip_request.dart';
 import 'package:readmock/domain/model/blog.dart';
 import 'package:readmock/domain/model/booklet.dart';
 import 'package:readmock/domain/model/payment_model.dart';
@@ -235,6 +236,64 @@ class DataRepositoryImpl implements DataRepository {
         } else {
           return [];
         }
+      } on Exception catch (e) {
+        throw ServerException(message: e.toString());
+      }
+    });
+  }
+
+  @override
+  EitherData<String> startTrip(StartTripRequest request) async {
+    //MultipartRequest
+    var user = await getInstance<LocalPrefs>().getUser();
+    var token = await getInstance<LocalPrefs>().getAccessToken();
+    return _execute(() async {
+      try {
+        var formData = FormData.fromMap({
+          'token': token,
+          'user_id': user!.id!,
+          'trip_id': request.tripId,
+          'front_image': await MultipartFile.fromFile(request.frontImage!.path,
+              filename: request.frontImage!.path.split('/').last),
+          'back_image': await MultipartFile.fromFile(request.backImage!.path,
+              filename: request.backImage!.path.split('/').last),
+          'left_image': await MultipartFile.fromFile(request.leftImage!.path,
+              filename: request.leftImage!.path.split('/').last),
+          'right_image': await MultipartFile.fromFile(request.rightImage!.path,
+              filename: request.rightImage!.path.split('/').last),
+        });
+
+        //Multipart request
+        final response = await _dio.post(
+          'trip/start',
+          data: formData,
+        );
+        if (response.data['status'] == true) {
+          return response.data['message'];
+        }
+        throw ServerException(message: response.data['message']);
+      } on Exception catch (e) {
+        throw ServerException(message: e.toString());
+      }
+    });
+  }
+
+  @override
+  EitherData<String> endTrip(int tripId) async {
+    var token = await getInstance<LocalPrefs>().getAccessToken();
+    var user = await getInstance<LocalPrefs>().getUser();
+    return _execute(() async {
+      try {
+        final response = await _dio.post('trip/end', data: {
+          'token': token,
+          'user_id': user!.id!,
+          'trip_id': tripId,
+        });
+
+        if (response.data['status'] == true) {
+          return response.data['message'];
+        }
+        throw ServerException(message: response.data['message']);
       } on Exception catch (e) {
         throw ServerException(message: e.toString());
       }

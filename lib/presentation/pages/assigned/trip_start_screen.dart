@@ -1,15 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:readmock/core/utils/dialog_utils.dart';
 import 'package:readmock/domain/model/trip.dart';
+import 'package:readmock/presentation/pages/assigned/cubit/assigned_cubit.dart';
 import 'package:readmock/presentation/pages/home/cubit/home_cubit.dart';
 import 'package:readmock/presentation/widgets/custom_scaffold.dart';
 import 'package:http/http.dart' as http;
+import 'package:slide_to_act/slide_to_act.dart';
 import 'dart:math' as math;
+
+import '../../../constant/enum.dart';
+import '../../../data/request/start_trip_request.dart';
+import '../../widgets/custom_circular_button.dart';
+import '../../widgets/custom_image_picker.dart';
+import '../../widgets/custom_text_field.dart';
+import '../../widgets/custome_video_picker.dart';
 
 class TripStartScreen extends StatefulWidget {
   TripStartScreen({Key? key, required this.trip}) : super(key: key);
@@ -25,9 +37,21 @@ class _TripStartScreenState extends State<TripStartScreen> {
   Set<Marker> markers = Set<Marker>();
   Set<Polyline> polylines = Set<Polyline>();
 
+  File? _image;
+
+  //Front image
+  //back image
+  //left image
+  //right image
+  File? _frontImage;
+  File? _backImage;
+  File? _leftImage;
+  File? _rightImage;
+
   @override
   void initState() {
     super.initState();
+    context.read<AssignedCubit>().setTrip(widget.trip);
     addMarkers();
   }
 
@@ -76,12 +100,11 @@ class _TripStartScreenState extends State<TripStartScreen> {
       ),
     );
 
-    fetchDirections(from, to); // Call fetchDirections here
+    fetchDirections(from, to);
   }
 
   Future<void> fetchDirections(LatLng origin, LatLng destination) async {
-    final apiKey =
-        'AIzaSyBDAit_21ZT1Wdu95dfDAYEnIqz8lwMa2o'; // Replace with your API key
+    final apiKey = 'AIzaSyBDAit_21ZT1Wdu95dfDAYEnIqz8lwMa2o';
     final url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&mode=driving&key=$apiKey';
 
@@ -106,7 +129,6 @@ class _TripStartScreenState extends State<TripStartScreen> {
           );
         });
 
-        // Zoom the camera to fit both markers and the polyline
         fitBounds(LatLngBounds(southwest: destination, northeast: origin));
       }
     }
@@ -157,6 +179,7 @@ class _TripStartScreenState extends State<TripStartScreen> {
 
     // Calculate distance between bounds
     double distance = _calculateDistance(newBounds);
+    log('Distance ' + distance.toString());
 
     // Set the zoom level based on the distance
     double zoomLevel = _calculateZoomLevel(distance);
@@ -191,20 +214,359 @@ class _TripStartScreenState extends State<TripStartScreen> {
     return CustomScaffold(
       contentPadding: EdgeInsets.zero,
       appBar: AppBar(
-        title: Text('Trip Details'),
+        title: Text(widget.trip.trip!.user!.name!),
       ),
-      body: GoogleMap(
-        onMapCreated: (controller) {
-          mapController = controller;
+      body: BlocListener<AssignedCubit, AssignedState>(
+        listener: (context, state) {
+          if (state.startTripStatus == StateStatusEnum.success) {}
+          if (state.startTripStatus == StateStatusEnum.error) {
+            Fluttertoast.showToast(msg: state.startTripError);
+          }
         },
-        initialCameraPosition: CameraPosition(
-          target:
-              context.read<HomeCubit>().state.currentLocation ?? LatLng(0, 0),
-          zoom: 15,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            GoogleMap(
+              onMapCreated: (controller) {
+                mapController = controller;
+              },
+              initialCameraPosition: CameraPosition(
+                target: context.read<HomeCubit>().state.currentLocation ??
+                    LatLng(0, 0),
+                zoom: 15,
+              ),
+              myLocationEnabled: true,
+              markers: markers,
+              polylines: polylines,
+            ),
+            Container(
+              margin: const EdgeInsets.all(16.0),
+              //,
+              height: 180,
+              width: MediaQuery.of(context).size.width,
+              decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueGrey.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: const Offset(0, 3),
+                    )
+                  ]),
+              child: Column(
+                children: [
+                  //Trip details
+                  SizedBox(
+                    height: 10,
+                  ),
+
+                  context.watch<AssignedCubit>().state.startTripStatus ==
+                          StateStatusEnum.loading
+                      ? CircularProgressIndicator()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          child: Column(
+                            children: [
+                              context
+                                          .read<AssignedCubit>()
+                                          .state
+                                          .trip
+                                          ?.tripStatus ==
+                                      null
+                                  ? SizedBox(
+                                      height: 50,
+                                      child: SlideAction(
+                                          outerColor: Colors.white60,
+                                          sliderButtonIconPadding: 10,
+                                          elevation: 0,
+                                          child: Text(
+                                            'Start Trip',
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          onSubmit: () {
+                                            showContactDetails(context);
+                                          }),
+                                    )
+                                  : SizedBox.shrink(),
+                              context
+                                          .read<AssignedCubit>()
+                                          .state
+                                          .trip
+                                          ?.tripStatus ==
+                                      0
+                                  ? SizedBox(
+                                      height: 50,
+                                      child: SlideAction(
+                                          outerColor: Colors.white60,
+                                          sliderButtonIconPadding: 10,
+                                          elevation: 0,
+                                          child: Text(
+                                            'End Trip',
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          onSubmit: () {
+                                            context
+                                                .read<AssignedCubit>()
+                                                .endTrip(widget.trip.trip!.id!);
+                                          }),
+                                    )
+                                  : SizedBox.shrink(),
+                              context
+                                          .read<AssignedCubit>()
+                                          .state
+                                          .trip
+                                          ?.tripStatus ==
+                                      1
+                                  ? Container(
+                                      height: 50,
+                                      width: MediaQuery.of(context).size.width,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green
+                                            .shade300, // Indicating a completed status with green color
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.green.withOpacity(0.5),
+                                            spreadRadius: 1,
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 3),
+                                          )
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'Trip Completed',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : SizedBox.shrink(),
+                            ],
+                          ),
+                        ),
+
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(
+                  //       horizontal: 16.0, vertical: 8.0),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.center,
+                  //     children: [
+
+                  //       context.read<AssignedCubit>().state.trip?.tripStatus ==
+                  //               1
+                  //           ? ElevatedButton(
+                  //               onPressed: () {
+                  //                 // TODO: Implement end button functionality
+                  //               },
+                  //               style: ElevatedButton.styleFrom(
+                  //                 primary: Colors.red, // background color
+                  //                 onPrimary: Colors.white, // text color
+                  //                 shape: RoundedRectangleBorder(
+                  //                   borderRadius: BorderRadius.circular(30),
+                  //                 ),
+                  //                 padding: EdgeInsets.symmetric(
+                  //                     horizontal: 32, vertical: 12),
+                  //               ),
+                  //               child: Text('End'),
+                  //             )
+                  //           : SizedBox.shrink(),
+                  //     ],
+                  //   ),
+                  // ),
+
+                  Spacer(),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8.0),
+                      height: 70,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.2)),
+                      child:
+                          //Locaton from to to
+                          //,
+                          Column(
+                        children: [
+                          Text(widget.trip.trip!.from!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(color: Colors.black)),
+                          Spacer(),
+                          Text('To',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold)),
+                          Spacer(),
+                          Text(
+                            widget.trip.trip!.to!,
+                            style: Theme.of(context).textTheme.labelSmall!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            )
+          ],
         ),
-        markers: markers,
-        polylines: polylines,
       ),
     );
+  }
+
+  void showContactDetails(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        isDismissible: true,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
+        ),
+        builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            maxChildSize: 1.0,
+            minChildSize: 0.1,
+            expand: false,
+            builder: (context, scrollController) =>
+                BlocListener<AssignedCubit, AssignedState>(
+                    listener: (context, state) {
+                      //loading
+
+                      if (state.getAssignedStatus == StateStatusEnum.loading) {
+                        DialogUtils.buildLoadingDialog(context);
+                      }
+                    },
+                    child: SingleChildScrollView(
+                        controller: scrollController,
+                        child: Form(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Text(
+                                    'Fill Details To Start Trip',
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(
+                                    height: 20,
+                                  ),
+
+                                  CustomImagePicker(
+                                    imageFile: _frontImage,
+                                    onImagePicked: (imageFile) {
+                                      setState(() {
+                                        _frontImage = imageFile;
+                                      });
+                                    },
+                                    title: 'Font Image',
+                                  ),
+
+                                  CustomImagePicker(
+                                    imageFile: _backImage,
+                                    onImagePicked: (imageFile) {
+                                      setState(() {
+                                        _backImage = imageFile;
+                                      });
+                                    },
+                                    title: 'Back Image',
+                                  ),
+
+                                  //for left image
+                                  CustomImagePicker(
+                                    imageFile: _leftImage,
+                                    onImagePicked: (imageFile) {
+                                      setState(() {
+                                        _leftImage = imageFile;
+                                      });
+                                    },
+                                    title: 'Left Image',
+                                  ),
+
+                                  //for right image
+                                  CustomImagePicker(
+                                    imageFile: _rightImage,
+                                    onImagePicked: (imageFile) {
+                                      setState(() {
+                                        _rightImage = imageFile;
+                                      });
+                                    },
+                                    title: 'Right Image',
+                                  ),
+
+                                  //Purchase Button
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                    child: SizedBox(
+                                      height: 50,
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          //check all image
+                                          if (_frontImage == null ||
+                                              _backImage == null ||
+                                              _leftImage == null ||
+                                              _rightImage == null) {
+                                            Fluttertoast.showToast(
+                                                msg:
+                                                    'Please select all images');
+                                          } else {
+                                            var request = StartTripRequest(
+                                              tripId: widget.trip.trip!.id!,
+                                              frontImage: _frontImage,
+                                              backImage: _backImage,
+                                              leftImage: _leftImage,
+                                              rightImage: _rightImage,
+                                            );
+                                            log('start trip request $request');
+
+                                            context
+                                                .read<AssignedCubit>()
+                                                .startTrip(request);
+
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: const Text('Start Trip'),
+                                      ),
+                                    ),
+                                  ),
+                                ]),
+                          ),
+                        )))));
   }
 }
